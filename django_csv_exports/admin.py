@@ -37,8 +37,13 @@ def export_as_csv(admin_model, request, queryset):
             response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=%s.csv' % text(opts).replace('.', '_')
 
+        csv_field_titles = field_names
+        if getattr(admin_model, 'csv_field_titles', None):
+            csv_field_titles = admin_model.csv_field_titles
+
         queryset = queryset.values_list(*field_names)
-        pandas.DataFrame(list(queryset), columns=field_names).to_csv(response, index=False, encoding='utf-8')
+        print("@queryset---", csv_field_titles, 'sdeee')
+        pandas.DataFrame(list(queryset), columns=csv_field_titles).to_csv(response, index=False, encoding='utf-8')
         return response
     return HttpResponseForbidden()
 export_as_csv.short_description = "Export selected objects as csv file"
