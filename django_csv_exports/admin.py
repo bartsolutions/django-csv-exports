@@ -23,10 +23,17 @@ def export_as_csv(admin_model, request, queryset):
         has_csv_permission = admin_model.has_csv_permission(request) \
             if (hasattr(admin_model, 'has_csv_permission') and callable(getattr(admin_model, 'has_csv_permission'))) \
             else True
+
+    csv_field_titles = []
     if has_csv_permission:
         opts = admin_model.model._meta
         if getattr(admin_model, 'csv_fields', None):
-            field_names = admin_model.csv_fields
+            csv_fields = admin_model.csv_fields
+            if type(csv_fields) == dict:
+                field_names = list(csv_fields.keys())
+                csv_field_titles = list(csv_fields.values())
+            else:
+                field_names = csv_fields
         else:
             field_names = [field.name for field in opts.fields]
             field_names.sort()
@@ -37,9 +44,8 @@ def export_as_csv(admin_model, request, queryset):
             response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=%s.csv' % text(opts).replace('.', '_')
 
-        csv_field_titles = field_names
-        if getattr(admin_model, 'csv_field_titles', None):
-            csv_field_titles = admin_model.csv_field_titles
+        if not csv_field_titles:
+            csv_field_titles = field_names
 
         queryset = queryset.values_list(*field_names)
         print("@queryset---", csv_field_titles, 'sdeee')
